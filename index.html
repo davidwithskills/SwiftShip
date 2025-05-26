@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SwiftShip - Premium Courier & Delivery Services</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="assets/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -60,6 +60,75 @@
         .input-highlight:focus {
             outline: none;
             box-shadow: 0 0 0 2px #3b82f6;
+        }
+        
+        #map, #tracking-map {
+            height: 100%;
+            min-height: 300px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            width: 65%;
+            transition: width 0.3s ease;
+        }
+        
+        .tracking-step {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .tracking-step:before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #e5e7eb;
+        }
+        
+        .tracking-step.active:before {
+            background-color: #3b82f6;
+        }
+        
+        .tracking-step:last-child:before {
+            display: none;
+        }
+        
+        .tracking-step .step-icon {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+        }
+        
+        .tracking-step.active .step-icon {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .tracking-step.completed .step-icon {
+            background-color: #10b981;
+            color: white;
         }
     </style>
 </head>
@@ -123,10 +192,10 @@
                         </div>
                         <div>
                             <p class="text-gray-600 text-sm">Average Delivery</p>
-                            <p class="font-bold text-gray-800">24-48 Hours</p>
-                        </div>
-                    </div>
-                </div>
+            <p class="font-bold text-gray-800">24-48 Hours</p>
+        </div>
+    </div>
+</div>
             </div>
         </div>
     </section>
@@ -163,404 +232,101 @@
                 <p class="text-gray-600 max-w-2xl mx-auto">Enter your tracking number to get real-time updates on your shipment's location and estimated delivery time.</p>
             </div>
             
-            <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden tracking-card">
+            <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden tracking-card">
                 <div class="p-8">
                     <div class="flex flex-col md:flex-row">
-                        <input type="text" placeholder="Enter Tracking Number" class="flex-grow px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 input-highlight">
-                        <button class="mt-4 md:mt-0 md:ml-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300">Track Now</button>
+                        <input type="text" id="tracking-input" placeholder="Enter Tracking Number" class="flex-grow px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 input-highlight">
+                        <button id="track-btn" class="mt-4 md:mt-0 md:ml-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300">Track Now</button>
                     </div>
                     
                     <div class="mt-8 hidden" id="tracking-result">
-                        <div class="flex items-center justify-between mb-6">
-                            <div>
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                            <div class="mb-4 md:mb-0">
                                 <p class="text-gray-600">Tracking Number</p>
                                 <p class="font-bold">SW123456789</p>
                             </div>
-                            <div>
+                            <div class="mb-4 md:mb-0">
                                 <p class="text-gray-600">Status</p>
                                 <p class="font-bold text-green-600">In Transit</p>
                             </div>
                             <div>
                                 <p class="text-gray-600">Estimated Delivery</p>
-                                <p class="font-bold">May 25, 2023</p>
+                                <p class="font-bold">Tomorrow by 8:00 PM</p>
                             </div>
                         </div>
                         
-                        <div class="relative">
-                            <!-- Progress steps -->
-                            <div class="absolute left-4 h-full w-0.5 bg-gray-200" style="top: 1.5rem;"></div>
-                            
-                            <div class="flex items-start mb-8">
-                                <div class="bg-blue-600 rounded-full h-8 w-8 flex items-center justify-center text-white mr-4 z-10">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div>
-                                    <p class="font-bold">Package Received</p>
-                                    <p class="text-gray-600">May 20, 2023 - 10:30 AM</p>
-                                    <p class="text-gray-600">New York Distribution Center</p>
+                        <div class="progress-bar mb-6">
+                            <div class="progress-fill"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Shipment Progress</h3>
+                                
+                                <div class="tracking-steps">
+                                    <div class="tracking-step completed">
+                                        <div class="step-icon"><i class="fas fa-check text-xs"></i></div>
+                                        <div class="step-content">
+                                            <p class="font-medium">Order Processed</p>
+                                            <p class="text-sm text-gray-500">June 10, 2023 - 9:30 AM</p>
+                                            <p class="text-sm text-gray-500">New York, NY</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tracking-step completed">
+                                        <div class="step-icon"><i class="fas fa-check text-xs"></i></div>
+                                        <div class="step-content">
+                                            <p class="font-medium">Shipped</p>
+                                            <p class="text-sm text-gray-500">June 10, 2023 - 2:15 PM</p>
+                                            <p class="text-sm text-gray-500">New York, NY</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tracking-step completed">
+                                        <div class="step-icon"><i class="fas fa-check text-xs"></i></div>
+                                        <div class="step-content">
+                                            <p class="font-medium">In Transit</p>
+                                            <p class="text-sm text-gray-500">June 11, 2023 - 5:45 AM</p>
+                                            <p class="text-sm text-gray-500">Chicago, IL</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tracking-step active">
+                                        <div class="step-icon"><i class="fas fa-truck text-xs"></i></div>
+                                        <div class="step-content">
+                                            <p class="font-medium">Out for Delivery</p>
+                                            <p class="text-sm text-gray-500">June 12, 2023 - 8:30 AM</p>
+                                            <p class="text-sm text-gray-500">Los Angeles, CA</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tracking-step">
+                                        <div class="step-icon"><i class="fas fa-home text-xs"></i></div>
+                                        <div class="step-content">
+                                            <p class="font-medium">Delivered</p>
+                                            <p class="text-sm text-gray-500">Estimated: June 12, 2023 - 8:00 PM</p>
+                                            <p class="text-sm text-gray-500">Los Angeles, CA</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div class="flex items-start mb-8">
-                                <div class="bg-blue-600 rounded-full h-8 w-8 flex items-center justify-center text-white mr-4 z-10">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div>
-                                    <p class="font-bold">In Transit</p>
-                                    <p class="text-gray-600">May 21, 2023 - 2:15 PM</p>
-                                    <p class="text-gray-600">Left New York Facility</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-start mb-8">
-                                <div class="bg-blue-600 rounded-full h-8 w-8 flex items-center justify-center text-white mr-4 z-10">
-                                    <i class="fas fa-truck"></i>
-                                </div>
-                                <div>
-                                    <p class="font-bold">Out for Delivery</p>
-                                    <p class="text-gray-600">May 25, 2023 - 8:00 AM</p>
-                                    <p class="text-gray-600">Los Angeles Local Facility</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <div class="bg-gray-200 rounded-full h-8 w-8 flex items-center justify-center text-gray-600 mr-4 z-10">
-                                    <i class="fas fa-home"></i>
-                                </div>
-                                <div>
-                                    <p class="font-bold text-gray-500">Delivered</p>
-                                    <p class="text-gray-400">Estimated by May 25, 2023 - 5:00 PM</p>
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Package Location</h3>
+                                <div id="tracking-map" class="h-64 md:h-full"></div>
+                                <div class="mt-4 flex items-center">
+                                    <div class="bg-blue-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-truck text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600">Current Location: <span class="font-medium">Los Angeles, CA</span></p>
+                                        <p class="text-sm text-gray-600">Last Update: <span class="font-medium">8:30 AM</span></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Services Section -->
-    <section class="py-16" id="services">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">Our Services</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">We offer a comprehensive range of delivery solutions tailored to meet your specific needs.</p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="bg-white rounded-xl shadow-md overflow-hidden service-card p-6">
-                    <div class="bg-blue-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                        <i class="fas fa-rocket text-blue-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Express Delivery</h3>
-                    <p class="text-gray-600">Get your packages delivered within 24 hours. Our fastest service for urgent deliveries.</p>
-                    <div class="mt-4">
-                        <span class="inline-block bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold">From $9.99</span>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-md overflow-hidden service-card p-6">
-                    <div class="bg-green-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                        <i class="fas fa-globe text-green-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">International Shipping</h3>
-                    <p class="text-gray-600">Reliable global delivery with customs clearance handled by our experts.</p>
-                    <div class="mt-4">
-                        <span class="inline-block bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-semibold">From $19.99</span>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-md overflow-hidden service-card p-6">
-                    <div class="bg-purple-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                        <i class="fas fa-box-open text-purple-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Warehouse & Fulfillment</h3>
-                    <p class="text-gray-600">Store your inventory in our facilities and let us handle picking, packing and shipping.</p>
-                    <div class="mt-4">
-                        <span class="inline-block bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-sm font-semibold">Custom Pricing</span>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-md overflow-hidden service-card p-6">
-                    <div class="bg-yellow-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                        <i class="fas fa-temperature-low text-yellow-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Temperature Controlled</h3>
-                    <p class="text-gray-600">Specialized shipping for perishable goods with temperature monitoring throughout transit.</p>
-                    <div class="mt-4">
-                        <span class="inline-block bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-sm font-semibold">From $14.99</span>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-md overflow-hidden service-card p-6">
-                    <div class="bg-red-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                        <i class="fas fa-gem text-red-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">High Value Items</h3>
-                    <p class="text-gray-600">Secure shipping for valuable items with additional insurance and security measures.</p>
-                    <div class="mt-4">
-                        <span class="inline-block bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-semibold">From $29.99</span>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-md overflow-hidden service-card p-6">
-                    <div class="bg-indigo-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4">
-                        <i class="fas fa-business-time text-indigo-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Business Solutions</h3>
-                    <p class="text-gray-600">Customized logistics solutions for businesses of all sizes with volume discounts.</p>
-                    <div class="mt-4">
-                        <span class="inline-block bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm font-semibold">Contact Us</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works Section -->
-    <section class="py-16 bg-gray-50">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">How It Works</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">Simple steps to get your package delivered quickly and safely.</p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="text-center">
-                    <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="text-blue-600 font-bold text-2xl">1</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Schedule a Pickup</h3>
-                    <p class="text-gray-600">Book online or through our app. We'll pick up your package at your preferred time.</p>
-                </div>
-                
-                <div class="text-center">
-                    <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="text-blue-600 font-bold text-2xl">2</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">We Handle the Logistics</h3>
-                    <p class="text-gray-600">Our network ensures your package is transported via the fastest and safest route.</p>
-                </div>
-                
-                <div class="text-center">
-                    <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="text-blue-600 font-bold text-2xl">3</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Package Delivered</h3>
-                    <p class="text-gray-600">Get real-time tracking updates until your package is safely delivered.</p>
-                </div>
-            </div>
-            
-            <div class="mt-12 text-center">
-                <a href="#contact" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold inline-block transition duration-300">Get Started</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section class="py-16" id="pricing">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">Simple, Transparent Pricing</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">No hidden fees. Pay only for what you need.</p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-                    <div class="p-8">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Standard</h3>
-                        <p class="text-gray-600 mb-6">For occasional senders with basic needs</p>
-                        <div class="mb-6">
-                            <span class="text-4xl font-bold text-gray-800">$9.99</span>
-                            <span class="text-gray-600">/package</span>
-                        </div>
-                        <ul class="space-y-3 mb-8">
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>2-3 business days</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Up to 5 lbs</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Tracking included</span>
-                            </li>
-                            <li class="flex items-center text-gray-400">
-                                <i class="fas fa-times text-red-400 mr-2"></i>
-                                <span>No weekend delivery</span>
-                            </li>
-                            <li class="flex items-center text-gray-400">
-                                <i class="fas fa-times text-red-400 mr-2"></i>
-                                <span>No signature required</span>
-                            </li>
-                        </ul>
-                        <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300">Choose Plan</button>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-blue-500 transform scale-105">
-                    <div class="bg-blue-500 text-white text-center py-2">
-                        <span class="font-semibold">MOST POPULAR</span>
-                    </div>
-                    <div class="p-8">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Express</h3>
-                        <p class="text-gray-600 mb-6">For time-sensitive deliveries</p>
-                        <div class="mb-6">
-                            <span class="text-4xl font-bold text-gray-800">$19.99</span>
-                            <span class="text-gray-600">/package</span>
-                        </div>
-                        <ul class="space-y-3 mb-8">
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Next business day</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Up to 10 lbs</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Real-time tracking</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Weekend delivery</span>
-                            </li>
-                            <li class="flex items-center text-gray-400">
-                                <i class="fas fa-times text-red-400 mr-2"></i>
-                                <span>No signature required</span>
-                            </li>
-                        </ul>
-                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300">Choose Plan</button>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-                    <div class="p-8">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Premium</h3>
-                        <p class="text-gray-600 mb-6">For valuable or sensitive items</p>
-                        <div class="mb-6">
-                            <span class="text-4xl font-bold text-gray-800">$29.99</span>
-                            <span class="text-gray-600">/package</span>
-                        </div>
-                        <ul class="space-y-3 mb-8">
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Next business day</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Up to 20 lbs</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Real-time tracking</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Weekend delivery</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check text-green-500 mr-2"></i>
-                                <span>Signature required</span>
-                            </li>
-                        </ul>
-                        <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300">Choose Plan</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-12 text-center">
-                <p class="text-gray-600 mb-4">Need custom pricing for your business?</p>
-                <a href="#contact" class="text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center">
-                    Contact our sales team <i class="fas fa-arrow-right ml-2"></i>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials Section -->
-    <section class="py-16 bg-gray-50" id="testimonials">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">What Our Customers Say</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">Trusted by thousands of businesses and individuals worldwide.</p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 testimonial-card">
-                    <div class="flex items-center mb-4">
-                        <div class="text-yellow-400 mr-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-6">"SwiftShip has transformed our e-commerce business. Their reliable service and real-time tracking give us peace of mind when shipping to customers."</p>
-                    <div class="flex items-center">
-                        <img src="https://randomuser.me/api/portraits/women/43.jpg" alt="Sarah Johnson" class="w-12 h-12 rounded-full mr-4">
-                        <div>
-                            <p class="font-bold text-gray-800">Sarah Johnson</p>
-                            <p class="text-gray-600">CEO, Boutique Finds</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 testimonial-card">
-                    <div class="flex items-center mb-4">
-                        <div class="text-yellow-400 mr-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-6">"I've used many courier services, but SwiftShip stands out for their exceptional customer service and on-time delivery guarantee."</p>
-                    <div class="flex items-center">
-                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Michael Chen" class="w-12 h-12 rounded-full mr-4">
-                        <div>
-                            <p class="font-bold text-gray-800">Michael Chen</p>
-                            <p class="text-gray-600">Small Business Owner</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 testimonial-card">
-                    <div class="flex items-center mb-4">
-                        <div class="text-yellow-400 mr-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star-half-alt"></i>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-6">"Their international shipping is a game-changer for our business. Customs clearance is handled seamlessly, saving us countless hours."</p>
-                    <div class="flex items-center">
-                        <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Emma Rodriguez" class="w-12 h-12 rounded-full mr-4">
-                        <div>
-                            <p class="font-bold text-gray-800">Emma Rodriguez</p>
-                            <p class="text-gray-600">Logistics Manager</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="py-16 bg-blue-600 text-white">
-        <div class="container mx-auto px-6 text-center">
-            <h2 class="text-3xl font-bold mb-4">Ready to Ship With Confidence?</h2>
-            <p class="text-xl mb-8 max-w-2xl mx-auto">Join thousands of satisfied customers who trust SwiftShip for their delivery needs.</p>
-            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <a href="#contact" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold transition duration-300">Get Started</a>
-                <a href="#contact" class="bg-transparent border-2 border-white hover:bg-white hover:text-blue-600 px-8 py-3 rounded-lg font-semibold transition duration-300">Contact Sales</a>
             </div>
         </div>
     </section>
@@ -600,8 +366,8 @@
                     </form>
                 </div>
                 
-                <div>
-                    <div class="bg-white rounded-xl shadow-md p-8 h-full">
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-md p-8">
                         <h3 class="text-xl font-bold text-gray-800 mb-6">Get in Touch</h3>
                         
                         <div class="space-y-6">
@@ -654,67 +420,11 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section class="py-16 bg-gray-50">
-        <div class="container mx-auto px-6 max-w-4xl">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">Frequently Asked Questions</h2>
-                <p class="text-gray-600">Find answers to common questions about our services.</p>
-            </div>
-            
-            <div class="space-y-4">
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <button class="w-full flex justify-between items-center p-6 focus:outline-none" onclick="toggleFAQ(1)">
-                        <h3 class="text-lg font-semibold text-gray-800 text-left">What areas do you service?</h3>
-                        <i class="fas fa-chevron-down text-blue-600 transition-transform duration-300" id="faq-icon-1"></i>
-                    </button>
-                    <div class="px-6 pb-6 hidden" id="faq-content-1">
-                        <p class="text-gray-600">We currently service all 50 states in the US and over 50 countries worldwide. Our international network is constantly expanding. You can check service availability by entering your destination zip code during the booking process.</p>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <button class="w-full flex justify-between items-center p-6 focus:outline-none" onclick="toggleFAQ(2)">
-                        <h3 class="text-lg font-semibold text-gray-800 text-left">How do I track my package?</h3>
-                        <i class="fas fa-chevron-down text-blue-600 transition-transform duration-300" id="faq-icon-2"></i>
-                    </button>
-                    <div class="px-6 pb-6 hidden" id="faq-content-2">
-                        <p class="text-gray-600">You can track your package using the tracking number provided in your confirmation email. Simply enter this number in the tracking section of our website or mobile app for real-time updates on your shipment's location and estimated delivery time.</p>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <button class="w-full flex justify-between items-center p-6 focus:outline-none" onclick="toggleFAQ(3)">
-                        <h3 class="text-lg font-semibold text-gray-800 text-left">What items are prohibited?</h3>
-                        <i class="fas fa-chevron-down text-blue-600 transition-transform duration-300" id="faq-icon-3"></i>
-                    </button>
-                    <div class="px-6 pb-6 hidden" id="faq-content-3">
-                        <p class="text-gray-600">We prohibit shipping hazardous materials, illegal substances, firearms, ammunition, perishable goods (without our temperature-controlled service), live animals, and cash. For a complete list of prohibited items, please refer to our Terms of Service.</p>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <button class="w-full flex justify-between items-center p-6 focus:outline-none" onclick="toggleFAQ(4)">
-                        <h3 class="text-lg font-semibold text-gray-800 text-left">What's your refund policy?</h3>
-                        <i class="fas fa-chevron-down text-blue-600 transition-transform duration-300" id="faq-icon-4"></i>
-                    </button>
-                    <div class="px-6 pb-6 hidden" id="faq-content-4">
-                        <p class="text-gray-600">If we fail to meet our guaranteed delivery time for express services, you may be eligible for a full or partial refund of your shipping costs. Refund requests must be submitted within 14 days of the delivery date. Please note that refunds are not available for standard shipping services.</p>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <button class="w-full flex justify-between items-center p-6 focus:outline-none" onclick="toggleFAQ(5)">
-                        <h3 class="text-lg font-semibold text-gray-800 text-left">How do I schedule a pickup?</h3>
-                        <i class="fas fa-chevron-down text-blue-600 transition-transform duration-300" id="faq-icon-5"></i>
-                    </button>
-                    <div class="px-6 pb-6 hidden" id="faq-content-5">
-                        <p class="text-gray-600">You can schedule a pickup through our website or mobile app after creating a shipment. Pickups are available Monday through Friday from 8am to 6pm, and Saturdays from 9am to 2pm in most areas. Same-day pickup may be available if scheduled before 12pm local time.</p>
+                    
+                    <!-- Google Maps Integration -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden p-4 h-full">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Our Location</h3>
+                        <div id="map" style="height:300px;width:100%;"></div>
                     </div>
                 </div>
             </div>
@@ -794,6 +504,9 @@
         </div>
     </footer>
 
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap&v=beta&libraries=marker" async defer></script>
+    
     <script>
         // Mobile menu toggle
         document.getElementById('menu-btn').addEventListener('click', function() {
@@ -801,22 +514,295 @@
             menu.classList.toggle('hidden');
         });
 
-        // Tracking form submission (demo purposes)
-        const trackForm = document.querySelector('#track input');
-        trackForm.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+        // Tracking form submission
+        document.getElementById('track-btn').addEventListener('click', function() {
+            const trackingInput = document.getElementById('tracking-input').value.trim();
+            if (trackingInput) {
                 document.getElementById('tracking-result').classList.remove('hidden');
+                initTrackingMap();
             }
         });
 
-        // FAQ toggle functionality
-        function toggleFAQ(num) {
-            const content = document.getElementById(`faq-content-${num}`);
-            const icon = document.getElementById(`faq-icon-${num}`);
+        // Make initMap globally available for Google Maps callback
+        async function initMap() {
+            // Request needed libraries
+            const { Map } = await google.maps.importLibrary("maps");
+            const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
             
-            content.classList.toggle('hidden');
-            icon.classList.toggle('transform');
-            icon.classList.toggle('rotate-180');
+            // Coordinates for New York office (example)
+            const officeLocation = { lat: 40.7128, lng: -74.0060 };
+            
+            // Create a map centered at the office location
+            const map = new Map(document.getElementById("map"), {
+                zoom: 14,
+                center: officeLocation,
+                // Remove or comment out mapId for now to avoid errors if not set up in Google Cloud
+                // mapId: "DEMO_MAP_ID",
+                styles: [
+                    {
+                        "featureType": "administrative",
+                        "elementType": "labels.text.fill",
+                        "stylers": [
+                            {
+                                "color": "#444444"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "landscape",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "color": "#f2f2f2"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "poi",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "visibility": "off"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "saturation": -100
+                            },
+                            {
+                                "lightness": 45
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "road.highway",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "visibility": "simplified"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "road.arterial",
+                        "elementType": "labels.icon",
+                        "stylers": [
+                            {
+                                "visibility": "off"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "transit",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "visibility": "off"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "color": "#3b82f6"
+                            },
+                            {
+                                "visibility": "on"
+                            }
+                        ]
+                    }
+                ]
+            });
+            
+            // Add a marker at the office location using AdvancedMarkerElement
+            const marker = new AdvancedMarkerElement({
+                position: officeLocation,
+                map: map,
+                title: "SwiftShip Headquarters",
+                content: createMarkerContent("blue")
+            });
+        }
+        window.initMap = initMap;
+
+        // Initialize Tracking Map
+        async function initTrackingMap() {
+            // Request needed libraries
+            const { Map } = await google.maps.importLibrary("maps");
+            const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+            
+            // Coordinates for the package's journey (example)
+            const locations = [
+                { lat: 40.7128, lng: -74.0060, title: "New York, NY", color: "green" },
+                { lat: 41.8781, lng: -87.6298, title: "Chicago, IL", color: "green" },
+                { lat: 34.0522, lng: -118.2437, title: "Los Angeles, CA", color: "red" }
+            ];
+            
+            // Create a map centered at the first location
+            const map = new Map(document.getElementById("tracking-map"), {
+                zoom: 4,
+                center: locations[0],
+                styles: [
+                    {
+                        "featureType": "administrative",
+                        "elementType": "labels.text.fill",
+                        "stylers": [
+                            {
+                                "color": "#444444"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "landscape",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "color": "#f2f2f2"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "poi",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "visibility": "off"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "saturation": -100
+                            },
+                            {
+                                "lightness": 45
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "road.highway",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "visibility": "simplified"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "road.arterial",
+                        "elementType": "labels.icon",
+                        "stylers": [
+                            {
+                                "visibility": "off"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "transit",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "visibility": "off"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "color": "#3b82f6"
+                            },
+                            {
+                                "visibility": "on"
+                            }
+                        ]
+                    }
+                ]
+            });
+            
+            // Add markers for each location using AdvancedMarkerElement
+            const markers = locations.map(location => {
+                return new AdvancedMarkerElement({
+                    position: { lat: location.lat, lng: location.lng },
+                    map: map,
+                    title: location.title,
+                    content: createMarkerContent(location.color)
+                });
+            });
+            
+            // Draw a polyline connecting the locations
+            const pathCoordinates = locations.map(loc => ({ lat: loc.lat, lng: loc.lng }));
+            const path = new google.maps.Polyline({
+                path: pathCoordinates,
+                geodesic: true,
+                strokeColor: "#3b82f6",
+                strokeOpacity: 1.0,
+                strokeWeight: 3,
+            });
+            
+            path.setMap(map);
+            
+            // Add a moving truck marker for animation
+            const truckMarker = new AdvancedMarkerElement({
+                position: locations[1], // Start at Chicago (middle point for demo)
+                map: map,
+                content: createTruckMarkerContent(),
+                title: "Your Package"
+            });
+            
+            // Animate the truck along the path
+            animateTruck(truckMarker, pathCoordinates, 2); // Speed factor of 2
+        }
+        
+        // Helper function to create marker content
+        function createMarkerContent(color) {
+            const container = document.createElement("div");
+            container.style.width = "20px";
+            container.style.height = "20px";
+            container.style.borderRadius = "50%";
+            container.style.backgroundColor = color === "red" ? "#ef4444" : color === "green" ? "#10b981" : "#3b82f6";
+            container.style.border = "2px solid white";
+            container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+            return container;
+        }
+        
+        // Helper function to create truck marker content
+        function createTruckMarkerContent() {
+            const container = document.createElement("div");
+            container.innerHTML = `
+                <div style="width: 32px; height: 32px; background-color: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    <i class="fas fa-truck" style="color: white; font-size: 14px;"></i>
+                </div>
+            `;
+            return container;
+        }
+        
+        // Animate truck marker along the path
+        function animateTruck(marker, path, speed) {
+            let count = 0;
+            const numPoints = path.length * 10; // More points for smoother animation
+            const interval = setInterval(() => {
+                count = (count + 1) % numPoints;
+                const idx = Math.floor(count / 10);
+                const fraction = (count % 10) / 10;
+                
+                if (idx < path.length - 1) {
+                    const lat = path[idx].lat + (path[idx + 1].lat - path[idx].lat) * fraction;
+                    const lng = path[idx].lng + (path[idx + 1].lng - path[idx].lng) * fraction;
+                    marker.position = { lat, lng };
+                } else {
+                    clearInterval(interval);
+                }
+            }, 100 / speed); // Adjust speed by changing interval
         }
 
         // Smooth scrolling for anchor links
