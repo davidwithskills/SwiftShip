@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -225,7 +227,7 @@
     </section>
 
     <!-- Tracking Section -->
-    <section class="py-16 bg-gray-50" id="track">
+    <section class="py-16 bg-gray-50 mb-24" id="track">
         <div class="container mx-auto px-6">
             <div class="text-center mb-12">
                 <h2 class="text-3xl font-bold text-gray-800 mb-2">Track Your Package</h2>
@@ -422,7 +424,7 @@
                     </div>
                     
                     <!-- Google Maps Integration -->
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden p-4 h-full">
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden p-4">
                         <h3 class="text-xl font-bold text-gray-800 mb-4">Our Location</h3>
                         <div id="map" style="height:300px;width:100%;"></div>
                     </div>
@@ -505,7 +507,7 @@
     </footer>
 
     <!-- Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap&v=beta&libraries=marker" async defer></script>
+    <!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap&v=beta&libraries=marker" async defer></script> -->
     
     <script>
         // Mobile menu toggle
@@ -513,297 +515,6 @@
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
         });
-
-        // Tracking form submission
-        document.getElementById('track-btn').addEventListener('click', function() {
-            const trackingInput = document.getElementById('tracking-input').value.trim();
-            if (trackingInput) {
-                document.getElementById('tracking-result').classList.remove('hidden');
-                initTrackingMap();
-            }
-        });
-
-        // Make initMap globally available for Google Maps callback
-        async function initMap() {
-            // Request needed libraries
-            const { Map } = await google.maps.importLibrary("maps");
-            const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-            
-            // Coordinates for New York office (example)
-            const officeLocation = { lat: 40.7128, lng: -74.0060 };
-            
-            // Create a map centered at the office location
-            const map = new Map(document.getElementById("map"), {
-                zoom: 14,
-                center: officeLocation,
-                // Remove or comment out mapId for now to avoid errors if not set up in Google Cloud
-                // mapId: "DEMO_MAP_ID",
-                styles: [
-                    {
-                        "featureType": "administrative",
-                        "elementType": "labels.text.fill",
-                        "stylers": [
-                            {
-                                "color": "#444444"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "landscape",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "color": "#f2f2f2"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "poi",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "visibility": "off"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "road",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "saturation": -100
-                            },
-                            {
-                                "lightness": 45
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "road.highway",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "visibility": "simplified"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "road.arterial",
-                        "elementType": "labels.icon",
-                        "stylers": [
-                            {
-                                "visibility": "off"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "transit",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "visibility": "off"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "water",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "color": "#3b82f6"
-                            },
-                            {
-                                "visibility": "on"
-                            }
-                        ]
-                    }
-                ]
-            });
-            
-            // Add a marker at the office location using AdvancedMarkerElement
-            const marker = new AdvancedMarkerElement({
-                position: officeLocation,
-                map: map,
-                title: "SwiftShip Headquarters",
-                content: createMarkerContent("blue")
-            });
-        }
-        window.initMap = initMap;
-
-        // Initialize Tracking Map
-        async function initTrackingMap() {
-            // Request needed libraries
-            const { Map } = await google.maps.importLibrary("maps");
-            const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-            
-            // Coordinates for the package's journey (example)
-            const locations = [
-                { lat: 40.7128, lng: -74.0060, title: "New York, NY", color: "green" },
-                { lat: 41.8781, lng: -87.6298, title: "Chicago, IL", color: "green" },
-                { lat: 34.0522, lng: -118.2437, title: "Los Angeles, CA", color: "red" }
-            ];
-            
-            // Create a map centered at the first location
-            const map = new Map(document.getElementById("tracking-map"), {
-                zoom: 4,
-                center: locations[0],
-                styles: [
-                    {
-                        "featureType": "administrative",
-                        "elementType": "labels.text.fill",
-                        "stylers": [
-                            {
-                                "color": "#444444"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "landscape",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "color": "#f2f2f2"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "poi",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "visibility": "off"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "road",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "saturation": -100
-                            },
-                            {
-                                "lightness": 45
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "road.highway",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "visibility": "simplified"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "road.arterial",
-                        "elementType": "labels.icon",
-                        "stylers": [
-                            {
-                                "visibility": "off"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "transit",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "visibility": "off"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "water",
-                        "elementType": "all",
-                        "stylers": [
-                            {
-                                "color": "#3b82f6"
-                            },
-                            {
-                                "visibility": "on"
-                            }
-                        ]
-                    }
-                ]
-            });
-            
-            // Add markers for each location using AdvancedMarkerElement
-            const markers = locations.map(location => {
-                return new AdvancedMarkerElement({
-                    position: { lat: location.lat, lng: location.lng },
-                    map: map,
-                    title: location.title,
-                    content: createMarkerContent(location.color)
-                });
-            });
-            
-            // Draw a polyline connecting the locations
-            const pathCoordinates = locations.map(loc => ({ lat: loc.lat, lng: loc.lng }));
-            const path = new google.maps.Polyline({
-                path: pathCoordinates,
-                geodesic: true,
-                strokeColor: "#3b82f6",
-                strokeOpacity: 1.0,
-                strokeWeight: 3,
-            });
-            
-            path.setMap(map);
-            
-            // Add a moving truck marker for animation
-            const truckMarker = new AdvancedMarkerElement({
-                position: locations[1], // Start at Chicago (middle point for demo)
-                map: map,
-                content: createTruckMarkerContent(),
-                title: "Your Package"
-            });
-            
-            // Animate the truck along the path
-            animateTruck(truckMarker, pathCoordinates, 2); // Speed factor of 2
-        }
-        
-        // Helper function to create marker content
-        function createMarkerContent(color) {
-            const container = document.createElement("div");
-            container.style.width = "20px";
-            container.style.height = "20px";
-            container.style.borderRadius = "50%";
-            container.style.backgroundColor = color === "red" ? "#ef4444" : color === "green" ? "#10b981" : "#3b82f6";
-            container.style.border = "2px solid white";
-            container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
-            return container;
-        }
-        
-        // Helper function to create truck marker content
-        function createTruckMarkerContent() {
-            const container = document.createElement("div");
-            container.innerHTML = `
-                <div style="width: 32px; height: 32px; background-color: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                    <i class="fas fa-truck" style="color: white; font-size: 14px;"></i>
-                </div>
-            `;
-            return container;
-        }
-        
-        // Animate truck marker along the path
-        function animateTruck(marker, path, speed) {
-            let count = 0;
-            const numPoints = path.length * 10; // More points for smoother animation
-            const interval = setInterval(() => {
-                count = (count + 1) % numPoints;
-                const idx = Math.floor(count / 10);
-                const fraction = (count % 10) / 10;
-                
-                if (idx < path.length - 1) {
-                    const lat = path[idx].lat + (path[idx + 1].lat - path[idx].lat) * fraction;
-                    const lng = path[idx].lng + (path[idx + 1].lng - path[idx].lng) * fraction;
-                    marker.position = { lat, lng };
-                } else {
-                    clearInterval(interval);
-                }
-            }, 100 / speed); // Adjust speed by changing interval
-        }
 
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -816,7 +527,7 @@
                 const targetElement = document.querySelector(targetId);
                 if (targetElement) {
                     window.scrollTo({
-                        top: targetElement.offsetTop - 80,
+                        top: targetElement.offsetTop - 80, // Offset for sticky nav
                         behavior: 'smooth'
                     });
                     
@@ -827,6 +538,69 @@
                     }
                 }
             });
+        });
+
+        // Initialize Leaflet map for office location with height and bounds limit
+        document.addEventListener("DOMContentLoaded", function() {
+            var officeLatLng = [40.7128, -74.0060]; // New York office
+
+            // Set bounds to limit the visible area (adjust as needed)
+            var southWest = L.latLng(40.5, -74.3);
+            var northEast = L.latLng(41.0, -73.7);
+            var bounds = L.latLngBounds(southWest, northEast);
+
+            var map = L.map('map', {
+                center: officeLatLng,
+                zoom: 13,
+                maxBounds: bounds,
+                maxBoundsViscosity: 1.0 // Prevents panning outside bounds
+            });
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            L.marker(officeLatLng).addTo(map)
+                .bindPopup('SwiftShip Headquarters<br>123 Shipping Lane, New York, NY')
+                .openPopup();
+        });
+
+        // Show tracking result and map when "Track Now" is clicked
+        document.getElementById('track-btn').addEventListener('click', function() {
+            const trackingInput = document.getElementById('tracking-input').value.trim();
+            if (trackingInput) {
+                // Show the tracking result section
+                document.getElementById('tracking-result').classList.remove('hidden');
+
+                // Initialize Leaflet map for tracking
+                // Remove any previous map instance if exists
+                if (window.trackingMap) {
+                    window.trackingMap.remove();
+                }
+
+                // Example: Los Angeles coordinates for demo
+                var trackingLatLng = [34.0522, -118.2437];
+
+                // Set bounds for tracking map (adjust as needed)
+                var sw = L.latLng(33.7, -118.7);
+                var ne = L.latLng(34.3, -118.1);
+                var trackingBounds = L.latLngBounds(sw, ne);
+
+                window.trackingMap = L.map('tracking-map', {
+                    center: trackingLatLng,
+                    zoom: 12,
+                    maxBounds: trackingBounds,
+                    maxBoundsViscosity: 1.0
+                });
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(window.trackingMap);
+
+                L.marker(trackingLatLng).addTo(window.trackingMap)
+                    .bindPopup('Current Package Location<br>Los Angeles, CA')
+                    .openPopup();
+            }
         });
     </script>
 </body>
