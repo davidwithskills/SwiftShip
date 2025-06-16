@@ -1019,6 +1019,12 @@ document.querySelectorAll('.faq-question').forEach(btn => {
     });
 });
 
+// Mobile menu toggle
+document.getElementById('menu-btn').addEventListener('click', function() {
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenu.classList.toggle('hidden');
+});
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('service-worker.js');
