@@ -952,12 +952,12 @@ document.querySelector('.quote-form form').addEventListener('submit', function(e
         `From ${origin} to ${destination} - ${weight} lbs - ${service.replace(/\s*\(.*\)/, '')} Service`;
 });
 
-const allowedTrackingNumber = "SW123456789";
+let allowedTrackingNumber = "SW123456789"; // Start with default
 const trackingInput = document.getElementById('tracking-input');
 
+// Input validation: only allow typing the current allowed tracking number
 trackingInput.addEventListener('input', function(e) {
     let val = this.value;
-    // Only allow characters that match the allowedTrackingNumber at each position
     let filtered = "";
     for (let i = 0; i < val.length; i++) {
         if (allowedTrackingNumber[i] && val[i] === allowedTrackingNumber[i]) {
@@ -976,6 +976,29 @@ trackingInput.addEventListener('paste', function(e) {
     if (paste === allowedTrackingNumber) {
         this.value = allowedTrackingNumber;
     }
+});
+
+// Tracking number generator function
+function generateTrackingNumber() {
+    let num = '';
+    for (let i = 0; i < 9; i++) {
+        num += Math.floor(Math.random() * 10);
+    }
+    return 'SW' + num;
+}
+
+// Add a button to generate and fill the tracking number
+const generatorBtn = document.createElement('button');
+generatorBtn.type = 'button';
+generatorBtn.textContent = 'Generate Tracking Number';
+generatorBtn.className = 'mt-4 md:mt-0 md:ml-4 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition duration-300';
+trackingInput.parentNode.appendChild(generatorBtn);
+
+generatorBtn.addEventListener('click', function() {
+    const newTracking = generateTrackingNumber();
+    allowedTrackingNumber = newTracking; // Update allowed number!
+    trackingInput.value = newTracking;
+    trackingInput.dispatchEvent(new Event('input'));
 });
 </script>
 </body>
