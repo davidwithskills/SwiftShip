@@ -466,7 +466,7 @@
                         <p class="text-gray-600 mb-6">Reliable economy shipping for standard packages</p>
                         <div class="mb-6">
                             <span class="text-gray-500 text-3xl font-light">$</span>
-                            <span class="text-5xl font-bold text-gray-800">8.99</span>
+                            <span class="text-5xl font-bold text-gray-800" id="standard-price">8.99</span>
                             <span class="text-gray-500">/package</span>
                         </div>
                         <ul class="space-y-3 mb-8">
@@ -500,7 +500,7 @@
                         <p class="text-gray-600 mb-6">Faster delivery for time-sensitive shipments</p>
                         <div class="mb-6">
                             <span class="text-gray-500 text-3xl font-light">$</span>
-                            <span class="text-5xl font-bold text-gray-800">14.99</span>
+                            <span class="text-5xl font-bold text-gray-800" id="express-price">14.99</span>
                             <span class="text-gray-500">/package</span>
                         </div>
                         <ul class="space-y-3 mb-8">
@@ -538,7 +538,7 @@
                         <p class="text-gray-600 mb-6">White-glove service for premium packages</p>
                         <div class="mb-6">
                             <span class="text-gray-500 text-3xl font-light">$</span>
-                            <span class="text-5xl font-bold text-gray-800">29.99</span>
+                            <span class="text-5xl font-bold text-gray-800" id="premium-price">29.99</span>
                             <span class="text-gray-500">/package</span>
                         </div>
                         <ul class="space-y-3 mb-8">
@@ -578,9 +578,9 @@
             <div class="text-center mb-8">
                 <h3 class="text-2xl font-bold text-gray-800 mb-2">Business Solutions</h3>
                 <p class="text-gray-600 max-w-2xl mx-auto mb-6">Custom pricing for high-volume shippers and corporate accounts</p>
-                <button class="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-lg font-semibold transition duration-300">
+                <a href="enterprise.html" class="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-lg font-semibold transition duration-300 inline-block">
                     Request Enterprise Pricing
-                </button>
+                </a>
             </div>
             
             <!-- Price Calculation Form -->
@@ -857,6 +857,24 @@ document.getElementById('track-btn').addEventListener('click', function() {
 
         moveMarker(0);
     }
+});
+
+const domesticPrices = {
+    standard: "8.99",
+    express: "14.99",
+    premium: "29.99"
+};
+const internationalPrices = {
+    standard: "24.99",
+    express: "39.99",
+    premium: "69.99"
+};
+
+document.getElementById('pricing-toggle').addEventListener('change', function() {
+    const isInternational = this.checked;
+    document.getElementById('standard-price').textContent = isInternational ? internationalPrices.standard : domesticPrices.standard;
+    document.getElementById('express-price').textContent = isInternational ? internationalPrices.express : domesticPrices.express;
+    document.getElementById('premium-price').textContent = isInternational ? internationalPrices.premium : domesticPrices.premium;
 });
 </script>
 </body>
