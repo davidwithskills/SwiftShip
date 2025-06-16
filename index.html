@@ -327,7 +327,8 @@
             <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden tracking-card">
                 <div class="p-8">
                     <div class="flex flex-col md:flex-row">
-                        <input type="text" id="tracking-input" placeholder="Enter Tracking Number" class="flex-grow px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 input-highlight">
+                        <input type="text" id="tracking-input" placeholder="Enter Tracking Number" maxlength="11"
+    class="flex-grow px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 input-highlight">
                         <button id="track-btn" class="mt-4 md:mt-0 md:ml-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300">Track Now</button>
                     </div>
                     
@@ -714,6 +715,47 @@
                         <p class="text-gray-600">For international shipments, consider using our Economy service level when possible, ensuring your package dimensions are as small as possible, and taking advantage of our "Ship Together" program which combines multiple small packages into one shipment to reduce costs.</p>
                     </div>
                 </div>
+                
+                <!-- New FAQ Items -->
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">What types of items can I ship with SwiftShip?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">
+                            You can ship documents, parcels, electronics, clothing, gifts, and most non-restricted items. Please note that hazardous materials, perishable goods, and items prohibited by law or international regulations cannot be shipped. If you have questions about a specific item, contact our support team.
+                        </p>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">How do I track my shipment?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">
+                            Enter your tracking number in the Track Your Package section above and click "Track Now" to view real-time updates on your shipment’s location and estimated delivery time.
+                        </p>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">Can I change my delivery address after shipping?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">
+                            Address changes may be possible before the package is out for delivery. Please contact our support team as soon as possible to request a change. Additional fees may apply.
+                        </p>
+                    </div>
+                </div>
             </div>
             
             <div class="text-center mt-12">
@@ -908,6 +950,32 @@ document.querySelector('.quote-form form').addEventListener('submit', function(e
     document.querySelector('#quote-result .text-3xl').textContent = `$${totalPrice.toFixed(2)}`;
     document.querySelector('#quote-result p.text-gray-600').textContent =
         `From ${origin} to ${destination} - ${weight} lbs - ${service.replace(/\s*\(.*\)/, '')} Service`;
+});
+
+const allowedTrackingNumber = "SW123456789";
+const trackingInput = document.getElementById('tracking-input');
+
+trackingInput.addEventListener('input', function(e) {
+    let val = this.value;
+    // Only allow characters that match the allowedTrackingNumber at each position
+    let filtered = "";
+    for (let i = 0; i < val.length; i++) {
+        if (allowedTrackingNumber[i] && val[i] === allowedTrackingNumber[i]) {
+            filtered += val[i];
+        } else {
+            break;
+        }
+    }
+    this.value = filtered;
+});
+
+// Prevent pasting anything except the full allowed tracking number
+trackingInput.addEventListener('paste', function(e) {
+    e.preventDefault();
+    const paste = (e.clipboardData || window.clipboardData).getData('text');
+    if (paste === allowedTrackingNumber) {
+        this.value = allowedTrackingNumber;
+    }
 });
 </script>
 </body>
