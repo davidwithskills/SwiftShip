@@ -831,12 +831,13 @@
 
     <script>
 document.getElementById('track-btn').addEventListener('click', function() {
-    const trackingInput = document.getElementById('tracking-input').value.trim();
-    if (trackingInput) {
+    const trackingInputValue = document.getElementById('tracking-input').value.trim();
+    if (trackingInputValue === allowedTrackingNumber) {
         document.getElementById('tracking-result').classList.remove('hidden');
 
         if (window.trackingMap) {
             window.trackingMap.remove();
+            document.getElementById('tracking-map').innerHTML = "";
         }
         if (window.trackingMarkerInterval) {
             clearTimeout(window.trackingMarkerInterval);
@@ -865,10 +866,13 @@ document.getElementById('track-btn').addEventListener('click', function() {
         var trackingBounds = L.latLngBounds([33.7, -119], [41.9, -73.5]);
         window.trackingMap = L.map('tracking-map', {
             center: route[0],
-            zoom: 4,
+            zoom: 6,
             maxBounds: trackingBounds,
             maxBoundsViscosity: 1.0
         });
+
+        // Add this line to fix centering issues:
+        setTimeout(() => { window.trackingMap.invalidateSize(); }, 200);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
@@ -891,13 +895,1060 @@ document.getElementById('track-btn').addEventListener('click', function() {
 
             window.trackingMarkerInterval = setTimeout(() => {
                 marker.setLatLng(route[step + 1]);
-                window.trackingMap.panTo(route[step + 1]);
+                window.trackingMap.setView(route[step + 1], window.trackingMap.getZoom()); // Center the map on the marker
                 marker.bindPopup(`Current Package Location<br>${cities[step + 1].name}<br>${cities[step + 1].time}`).openPopup();
                 moveMarker(step + 1);
             }, animInterval);
         }
 
         moveMarker(0);
+    } else {
+        // Optionally, hide result or show error if tracking number is invalid
+        document.getElementById('tracking-result').classList.add('hidden');
+        alert("Please enter a valid tracking number.");
+    }
+});
+
+const domesticPrices = {
+    standard: "8.99",
+    express: "14.99",
+    premium: "29.99"
+};
+const internationalPrices = {
+    standard: "24.99",
+    express: "39.99",
+    premium: "69.99"
+};
+
+document.getElementById('pricing-toggle').addEventListener('change', function() {
+    const isInternational = this.checked;
+    document.getElementById('standard-price').textContent = isInternational ? internationalPrices.standard : domesticPrices.standard;
+    document.getElementById('express-price').textContent = isInternational ? internationalPrices.express : domesticPrices.express;
+    document.getElementById('premium-price').textContent = isInternational ? internationalPrices.premium : domesticPrices.premium;
+});
+
+document.querySelector('.quote-form form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Get form values
+    const origin = document.getElementById('origin').value;
+    const destination = document.getElementById('destination').value;
+    const weight = parseFloat(document.getElementById('weight').value) || 0;
+    const service = document.getElementById('service').value;
+
+    // Determine if international
+    const isInternational = origin !== destination;
+
+    // Set base prices
+    const prices = isInternational ? internationalPrices : domesticPrices;
+
+    // Determine service key
+    let serviceKey = 'standard';
+    if (service.toLowerCase().includes('express')) serviceKey = 'express';
+    if (service.toLowerCase().includes('premium')) serviceKey = 'premium';
+
+    // Calculate price (add $2 per lb over included weight)
+    let basePrice = parseFloat(prices[serviceKey]);
+    let includedWeight = 5;
+    if (serviceKey === 'express') includedWeight = 10;
+    if (serviceKey === 'premium') includedWeight = 30;
+    let extraWeight = Math.max(0, weight - includedWeight);
+    let totalPrice = basePrice + extraWeight * 2;
+
+    // Update quote result
+    document.getElementById('quote-result').classList.remove('hidden');
+    document.querySelector('#quote-result .text-3xl').textContent = `$${totalPrice.toFixed(2)}`;
+    document.querySelector('#quote-result p.text-gray-600').textContent =
+        `From ${origin} to ${destination} - ${weight} lbs - ${service.replace(/\s*\(.*\)/, '')} Service`;
+});
+
+let allowedTrackingNumber = "SW123456789"; // Start with default
+const trackingInput = document.getElementById('tracking-input');
+
+// Input validation: only allow typing the current allowed tracking number
+trackingInput.addEventListener('input', function(e) {
+    let val = this.value;
+    let filtered = "";
+    for (let i = 0; i < val.length; i++) {
+        if (allowedTrackingNumber[i] && val[i] === allowedTrackingNumber[i]) {
+            filtered += val[i];
+        } else {
+            break;
+        }
+    }
+    this.value = filtered;
+});
+
+// Prevent pasting anything except the full allowed tracking number
+trackingInput.addEventListener('paste', function(e) {
+    e.preventDefault();
+    const paste = (e.clipboardData || window.clipboardData).getData('text');
+    if (paste === allowedTrackingNumber) {
+        this.value = allowedTrackingNumber;
+    }
+});
+
+// Tracking number generator function
+function generateTrackingNumber() {
+    let num = '';
+    for (let i = 0; i < 9; i++) {
+        num += Math.floor(Math.random() * 10);
+    }
+    return 'SW' + num;
+}
+
+// Add a button to generate and fill the tracking number
+const generatorBtn = document.createElement('button');
+generatorBtn.type = 'button';
+generatorBtn.textContent = 'Generate Tracking Number';
+generatorBtn.className = 'mt-4 md:mt-0 md:ml-4 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition duration-300';
+trackingInput.parentNode.appendChild(generatorBtn);
+
+generatorBtn.addEventListener('click', function() {
+    const newTracking = generateTrackingNumber();
+    allowedTrackingNumber = newTracking; // Update allowed number!
+    trackingInput.value = newTracking;
+    trackingInput.dispatchEvent(new Event('input'));
+});
+
+// FAQ accordion toggle
+document.querySelectorAll('.faq-question').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const answer = this.nextElementSibling;
+        if (answer) {
+            answer.classList.toggle('hidden');
+        }
+        // Optionally, toggle the chevron icon direction
+        const icon = this.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('fa-chevron-down');
+            icon.classList.toggle('fa-chevron-up');
+        }
+    });
+});
+
+// Mobile menu toggle
+document.getElementById('menu-btn').addEventListener('click', function() {
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenu.classList.toggle('hidden');
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('service-worker.js');
+  });
+}
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftShip - Premium Courier & Delivery Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            scroll-behavior: smooth;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        
+        .tracking-card {
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tracking-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .service-card {
+            transition: all 0.3s ease;
+        }
+        
+        .service-card:hover {
+            transform: scale(1.03);
+        }
+        
+        .animate-bounce-slow {
+            animation: bounce 3s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+        
+        .testimonial-card {
+            transition: all 0.3s ease;
+        }
+        
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .input-highlight:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+        
+        #map, #tracking-map {
+            height: 100%;
+            min-height: 300px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            width: 65%;
+            transition: width 0.3s ease;
+        }
+        
+        .tracking-step {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .tracking-step:before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #e5e7eb;
+        }
+        
+        .tracking-step.active:before {
+            background-color: #3b82f6;
+        }
+        
+        .tracking-step:last-child:before {
+            display: none;
+        }
+        
+        .tracking-step .step-icon {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+        }
+        
+        .tracking-step.active .step-icon {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .tracking-step.completed .step-icon {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        /* Pricing section styles */
+        .pricing-card {
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .pricing-popular {
+            position: relative;
+            border: 2px solid #3b82f6;
+        }
+        
+        .pricing-popular::after {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+        }
+        
+        .check-icon {
+            color: #10b981;
+        }
+        
+        .price-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 32px;
+        }
+        
+        .price-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .price-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e5e7eb;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .price-slider:before {
+            position: absolute;
+            content: "";
+            height: 24px;
+            width: 24px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .price-slider {
+            background-color: #3b82f6;
+        }
+        
+        input:checked + .price-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .quote-form {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="text-blue-600">
+                        <i class="fas fa-shipping-fast text-3xl"></i>
+                    </div>
+                    <a href="#" class="ml-2 text-2xl font-bold text-gray-800">Swift<span class="text-blue-600">Ship</span></a>
+                </div>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#home" class="text-gray-800 hover:text-blue-600 font-medium">Home</a>
+                    <a href="#track" class="text-gray-800 hover:text-blue-600 font-medium">Track</a>
+                    <a href="#pricing" class="text-gray-800 hover:text-blue-600 font-medium">Pricing</a>
+                    <a href="#contact" class="text-gray-800 hover:text-blue-600 font-medium">Contact</a>
+                    <a href="about.html" class="text-gray-800 hover:text-blue-600 font-medium">About Us</a>
+                </div>
+                
+                <div class="md:hidden">
+                    <button class="text-gray-800 focus:outline-none" id="menu-btn">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile menu -->
+            <div class="md:hidden hidden mt-4" id="mobile-menu">
+                <a href="#home" class="block py-2 text-gray-800 hover:text-blue-600">Home</a>
+                <a href="#track" class="block py-2 text-gray-800 hover:text-blue-600">Track</a>
+                <a href="#pricing" class="block py-2 text-gray-800 hover:text-blue-600">Pricing</a>
+                <a href="#contact" class="block py-2 text-gray-800 hover:text-blue-600">Contact</a>
+                <a href="about.html" class="block py-2 text-gray-800 hover:text-blue-600">About Us</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient text-white py-20" id="home">
+        <div class="container mx-auto px-6 flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-10 md:mb-0">
+                <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-4">Fast & Reliable <span class="text-yellow-300">Courier</span> Services</h1>
+                <p class="text-xl mb-8">Delivering your packages with speed and care. Our network spans across 50+ countries with 99.7% on-time delivery rate.</p>
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <a href="#track" class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-center transition duration-300">Track Package</a>
+                    <a href="#pricing" class="bg-transparent border-2 border-white hover:bg-white hover:text-blue-600 px-8 py-3 rounded-lg font-semibold text-center transition duration-300">Get a Quote</a>
+                </div>
+            </div>
+            <div class="md:w-1/2 relative">
+                <img src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Courier Service" class="rounded-lg shadow-2xl animate-bounce-slow">
+                <div class="absolute -bottom-5 -left-5 bg-white p-4 rounded-lg shadow-lg hidden md:block">
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 p-3 rounded-full mr-3">
+                            <i class="fas fa-clock text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm">Average Delivery</p>
+                            <p class="font-bold text-gray-800">24-48 Hours</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="bg-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div class="p-6">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">10M+</div>
+                    <div class="text-gray-600">Packages Delivered</div>
+                </div>
+                <div class="p-6">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">50+</div>
+                    <div class="text-gray-600">Countries Served</div>
+                </div>
+                <div class="p-6">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">99.7%</div>
+                    <div class="text-gray-600">On-Time Rate</div>
+                </div>
+                <div class="p-6">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">24/7</div>
+                    <div class="text-gray-600">Customer Support</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tracking Section -->
+    <section class="py-16 bg-gray-50" id="track">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Track Your Package</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Enter your tracking number to get real-time updates on your shipment's location and estimated delivery time.</p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden tracking-card">
+                <div class="p-8">
+                    <div class="flex flex-col md:flex-row">
+                        <input type="text" id="tracking-input" placeholder="Enter Tracking Number" maxlength="11"
+    class="flex-grow px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 input-highlight">
+                        <button id="track-btn" class="mt-4 md:mt-0 md:ml-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition duration-300">Track Now</button>
+                    </div>
+                    
+                    <div class="mt-8 hidden" id="tracking-result">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                            <div class="mb-4 md:mb-0">
+                                <p class="text-gray-600">Tracking Number</p>
+                                <p class="font-bold">SW123456789</p>
+                            </div>
+                            <div class="mb-4 md:mb-0">
+                                <p class="text-gray-600">Status</p>
+                                <p class="font-bold text-green-600">In Transit</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">Estimated Delivery</p>
+                                <p class="font-bold">Tomorrow by 8:00 PM</p>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-bar mb-6">
+                            <div class="progress-fill"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Shipment Progress</h3>
+                                
+                                <div class="tracking-steps">
+                                    <div class="tracking-step completed">
+                                        <div class="step-icon"><i class="fas fa-check text-xs"></i></div>
+                                        <div class="step-content">
+                                            <p class="font-medium">Order Processed</p>
+                                            <p class="text-sm text-gray-500">June 10, 2023 - 9:30 AM</p>
+                                            <p class="text-sm text-gray-500">New York, NY</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tracking-step completed">
+                                        <div class="step-icon"><i class="fas fa-check text-xs"></i></div>
+                                        <div class="step-content">
+                                            <p class="font-medium">Shipped</p>
+                                            <p class="text-sm text-gray-500">June 10, 2023 - 2:15 PM</p>
+                                            <p class="text-sm text-gray-500">New York, NY</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tracking-step completed">
+                                        <div class="step-icon"><i class="fas fa-check text-xs"></i></div>
+                                        <div class="step-content">
+                                            <p class="font-medium">In Transit</p>
+                                            <p class="text-sm text-gray-500">June 11, 2023 - 5:45 AM</p>
+                                            <p class="text-sm text-gray-500">Chicago, IL</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tracking-step active">
+                                        <div class="step-icon"><i class="fas fa-truck text-xs"></i></div>
+                                        <div class="step-content">
+                                            <p class="font-medium">Out for Delivery</p>
+                                            <p class="text-sm text-gray-500">June 12, 2023 - 8:30 AM</p>
+                                            <p class="text-sm text-gray-500">Los Angeles, CA</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tracking-step">
+                                        <div class="step-icon"><i class="fas fa-home text-xs"></i></div>
+                                        <div class="step-content">
+                                            <p class="font-medium">Delivered</p>
+                                            <p class="text-sm text-gray-500">Estimated: June 12, 2023 - 8:00 PM</p>
+                                            <p class="text-sm text-gray-500">Los Angeles, CA</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Package Location</h3>
+                                <div id="tracking-map" class="h-64 md:h-full"></div>
+                                <div class="mt-4 flex items-center">
+                                    <div class="bg-blue-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-truck text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600">Current Location: <span class="font-medium">Los Angeles, CA</span></p>
+                                        <p class="text-sm text-gray-600">Last Update: <span class="font-medium">8:30 AM</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="py-16 bg-white" id="pricing">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Simple, Transparent Pricing</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Choose the perfect shipping solution for your needs. No hidden fees, just fast and reliable service.</p>
+                
+                <!-- Pricing Toggle -->
+                <div class="flex items-center justify-center mt-8">
+                    <span class="mr-4 font-medium">Domestic</span>
+                    <label class="price-toggle">
+                        <input type="checkbox" id="pricing-toggle">
+                        <span class="price-slider"></span>
+                    </label>
+                    <span class="ml-4 font-medium">International</span>
+                </div>
+            </div>
+            
+            <!-- Pricing Tabs -->
+            <div class="flex justify-center mb-8">
+                <div class="inline-flex rounded-md shadow-sm" role="group">
+                    <button type="button" class="tab-btn px-6 py-3 text-sm font-medium rounded-l-lg border border-gray-300 hover:bg-gray-50 active">
+                        Standard Shipping
+                    </button>
+                    <button type="button" class="tab-btn px-6 py-3 text-sm font-medium border-t border-b border-gray-300 hover:bg-gray-50">
+                        Express Shipping
+                    </button>
+                    <button type="button" class="tab-btn px-6 py-3 text-sm font-medium rounded-r-lg border border-gray-300 hover:bg-gray-50">
+                        Premium Shipping
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Pricing Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
+                <!-- Standard Plan -->
+                <div class="pricing-card bg-white rounded-xl overflow-hidden border border-gray-200">
+                    <div class="p-8">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Standard</h3>
+                        <p class="text-gray-600 mb-6">Reliable economy shipping for standard packages</p>
+                        <div class="mb-6">
+                            <span class="text-gray-500 text-3xl font-light">$</span>
+                            <span class="text-5xl font-bold text-gray-800" id="standard-price">8.99</span>
+                            <span class="text-gray-500">/package</span>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">2-5 business days</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Up to 5 lbs included</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Package tracking</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Standard insurance ($100)</span>
+                            </li>
+                        </ul>
+                        <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg transition duration-300">
+                            Choose Standard
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Express Plan (Most Popular) -->
+                <div class="pricing-card bg-white rounded-xl overflow-hidden pricing-popular">
+                    <div class="p-8">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Express</h3>
+                        <p class="text-gray-600 mb-6">Faster delivery for time-sensitive shipments</p>
+                        <div class="mb-6">
+                            <span class="text-gray-500 text-3xl font-light">$</span>
+                            <span class="text-5xl font-bold text-gray-800" id="express-price">14.99</span>
+                            <span class="text-gray-500">/package</span>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">1-3 business days</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Up to 10 lbs included</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Priority handling</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Extended insurance ($300)</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Real-time tracking</span>
+                            </li>
+                        </ul>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300">
+                            Choose Express
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Premium Plan -->
+                <div class="pricing-card bg-white rounded-xl overflow-hidden border border-gray-200">
+                    <div class="p-8">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Premium</h3>
+                        <p class="text-gray-600 mb-6">White-glove service for premium packages</p>
+                        <div class="mb-6">
+                            <span class="text-gray-500 text-3xl font-light">$</span>
+                            <span class="text-5xl font-bold text-gray-800" id="premium-price">29.99</span>
+                            <span class="text-gray-500">/package</span>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Next business day</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Up to 30 lbs included</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">VIP handling & support</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Full insurance ($1000)</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">Signature confirmation</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle check-icon mr-2"></i>
+                                <span class="text-gray-700">24/7 personal concierge</span>
+                            </li>
+                        </ul>
+                        <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg transition duration-300">
+                            Choose Premium
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Business Pricing -->
+            <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-2">Business Solutions</h3>
+                <p class="text-gray-600 max-w-2xl mx-auto mb-6">Custom pricing for high-volume shippers and corporate accounts</p>
+                <a href="enterprise.html" class="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-lg font-semibold transition duration-300 inline-block">
+                    Request Enterprise Pricing
+                </a>
+            </div>
+            
+            <!-- Price Calculation Form -->
+            <div class="max-w-4xl mx-auto bg-blue-50 rounded-xl p-8 quote-form">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Get an Instant Quote</h3>
+                <form class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="origin" class="block text-gray-700 font-medium mb-2">Origin</label>
+                        <select id="origin" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>United States</option>
+                            <option>Canada</option>
+                            <option>United Kingdom</option>
+                            <option>Germany</option>
+                            <option>Australia</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="destination" class="block text-gray-700 font-medium mb-2">Destination</label>
+                        <select id="destination" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>United States</option>
+                            <option>Canada</option>
+                            <option>United Kingdom</option>
+                            <option>Germany</option>
+                            <option>Australia</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="weight" class="block text-gray-700 font-medium mb-2">Weight (lbs)</label>
+                        <input type="number" id="weight" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter weight">
+                    </div>
+                    
+                    <div>
+                        <label for="service" class="block text-gray-700 font-medium mb-2">Service Type</label>
+                        <select id="service" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option>Standard (2-5 days)</option>
+                            <option>Express (1-3 days)</option>
+                            <option>Premium (Next day)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300">
+                            Calculate Price
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="mt-6 p-6 bg-white rounded-lg hidden" id="quote-result">
+                    <div class="flex flex-col md:flex-row justify-between items-center">
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-800 mb-1">Your Estimated Price:</h4>
+                            <p class="text-gray-600">From New York to Los Angeles - 5 lbs - Express Service</p>
+                        </div>
+                        <div class="text-3xl font-bold text-blue-600 mt-4 md:mt-0">$14.99</div>
+                    </div>
+                    
+                    <button class="mt-6 w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300">
+                        Proceed to Ship
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-6 max-w-4xl">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Frequently Asked Questions</h2>
+                <p class="text-gray-600">Everything you need to know about our pricing and services</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">How are shipping rates calculated?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">Shipping rates are based on several factors including package weight and dimensions, distance between origin and destination, service level selected, and any additional services like insurance or signature confirmation. Our pricing calculator provides an instant estimate based on these parameters.</p>
+                    </div>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">What's the difference between standard and express shipping?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">Standard shipping typically takes 2-5 business days within the same country, while express shipping guarantees delivery within 1-3 business days. Express shipments also receive priority handling throughout our network and include additional insurance coverage by default.</p>
+                    </div>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">Are there any hidden fees?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">No, we believe in transparent pricing. The price you see is the price you pay, with no hidden fees or unexpected surcharges. All applicable taxes and duties for international shipments will be clearly displayed during checkout.</p>
+                    </div>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">Do you offer discounts for bulk shipments?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">Yes! We offer significant volume discounts for businesses and individuals who ship more than 20 packages per month. Contact our sales team to discuss custom pricing options that can save you up to 40% compared to standard rates.</p>
+                    </div>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">How can I save on international shipping?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">For international shipments, consider using our Economy service level when possible, ensuring your package dimensions are as small as possible, and taking advantage of our "Ship Together" program which combines multiple small packages into one shipment to reduce costs.</p>
+                    </div>
+                </div>
+                
+                <!-- New FAQ Items -->
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">What types of items can I ship with SwiftShip?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">
+                            You can ship documents, parcels, electronics, clothing, gifts, and most non-restricted items. Please note that hazardous materials, perishable goods, and items prohibited by law or international regulations cannot be shipped. If you have questions about a specific item, contact our support team.
+                        </p>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">How do I track my shipment?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">
+                            Enter your tracking number in the Track Your Package section above and click "Track Now" to view real-time updates on your shipment’s location and estimated delivery time.
+                        </p>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <button class="faq-question w-full text-left p-6 bg-white hover:bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-medium text-gray-800">Can I change my delivery address after shipping?</h3>
+                            <i class="fas fa-chevron-down text-gray-500 transition-transform transform"></i>
+                        </div>
+                    </button>
+                    <div class="faq-answer p-6 bg-gray-50 hidden">
+                        <p class="text-gray-600">
+                            Address changes may be possible before the package is out for delivery. Please contact our support team as soon as possible to request a change. Additional fees may apply.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-12">
+                <h4 class="text-xl font-medium text-gray-800 mb-4">Still have questions?</h4>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300">
+                    Contact Our Support Team
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="py-16" id="contact">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Contact Us</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto mb-6">We're here to help! Get in touch with us for any inquiries or support.</p>
+            </div>
+            
+            <div class="max-w-lg mx-auto bg-white rounded-xl shadow-md p-8">
+                <form action="#" method="POST">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label for="name" class="block text-gray-700 font-medium mb-2">Name</label>
+                            <input type="text" id="name" name="name" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label for="email" class="block text-gray-700 font-medium mb-2">Email</label>
+                            <input type="email" id="email" name="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label for="message" class="block text-gray-700 font-medium mb-2">Message</label>
+                            <textarea id="message" name="message" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300">
+                            Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <a href="#" class="text-3xl font-bold hover:text-gray-300">Swift<span class="text-blue-600">Ship</span></a>
+                </div>
+                
+                <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-8">
+                    <a href="#home" class="hover:text-gray-300">Home</a>
+                    <a href="#track" class="hover:text-gray-300">Track</a>
+                    <a href="#pricing" class="hover:text-gray-300">Pricing</a>
+                    <a href="#contact" class="hover:text-gray-300">Contact</a>
+                    <a href="about.html" class="hover:text-gray-300">About Us</a>
+                </div>
+            </div>
+            
+            <div class="mt-8 border-t border-gray-700 pt-6 text-center">
+                <p class="text-gray-400 text-sm">&copy; 2023 SwiftShip. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+document.getElementById('track-btn').addEventListener('click', function() {
+    const trackingInputValue = document.getElementById('tracking-input').value.trim();
+    if (trackingInputValue === allowedTrackingNumber) {
+        document.getElementById('tracking-result').classList.remove('hidden');
+
+        if (window.trackingMap) {
+            window.trackingMap.remove();
+            document.getElementById('tracking-map').innerHTML = "";
+        }
+        if (window.trackingMarkerInterval) {
+            clearTimeout(window.trackingMarkerInterval);
+        }
+
+        const route = [
+            [40.7128, -74.0060], // New York
+            [41.8781, -87.6298], // Chicago
+            [39.7392, -104.9903], // Denver
+            [36.1699, -115.1398], // Las Vegas
+            [34.0522, -118.2437]  // Los Angeles
+        ];
+        const cities = [
+            { name: 'New York, NY', time: 'June 10, 2023 - 9:30 AM' },
+            { name: 'Chicago, IL', time: 'June 11, 2023 - 5:45 AM' },
+            { name: 'Denver, CO', time: 'June 11, 2023 - 4:00 PM' },
+            { name: 'Las Vegas, NV', time: 'June 12, 2023 - 8:30 AM' },
+            { name: 'Los Angeles, CA', time: 'Estimated: June 12, 2023 - 8:00 PM' }
+        ];
+
+        // Convert city times to Date objects
+        const dateTimes = cities.map(city => new Date(city.time.replace('Estimated: ', '')));
+
+        let step = 0;
+
+        var trackingBounds = L.latLngBounds([33.7, -119], [41.9, -73.5]);
+        window.trackingMap = L.map('tracking-map', {
+            center: route[0],
+            zoom: 6,
+            maxBounds: trackingBounds,
+            maxBoundsViscosity: 1.0
+        });
+
+        // Add this line to fix centering issues:
+        setTimeout(() => { window.trackingMap.invalidateSize(); }, 200);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(window.trackingMap);
+
+        let marker = L.marker(route[0]).addTo(window.trackingMap)
+            .bindPopup(`Current Package Location<br>${cities[0].name}<br>${cities[0].time}`)
+            .openPopup();
+
+        function moveMarker(step) {
+            if (step >= route.length - 1) {
+                marker.bindPopup(`Package Delivered!<br>${cities[step].name}<br>${cities[step].time}`).openPopup();
+                return;
+            }
+            // Calculate interval based on actual time difference (scaled down for demo)
+            let interval = dateTimes[step + 1] - dateTimes[step];
+            // Scale down: 2 hours in ms
+            let scale = 7200000; // 2 hours in ms
+            let animInterval = Math.max(1000, interval / scale * 1000); // Minimum 1s per step
+
+            window.trackingMarkerInterval = setTimeout(() => {
+                marker.setLatLng(route[step + 1]);
+                window.trackingMap.setView(route[step + 1], window.trackingMap.getZoom()); // Center the map on the marker
+                marker.bindPopup(`Current Package Location<br>${cities[step + 1].name}<br>${cities[step + 1].time}`).openPopup();
+                moveMarker(step + 1);
+            }, animInterval);
+        }
+
+        moveMarker(0);
+    } else {
+        // Optionally, hide result or show error if tracking number is invalid
+        document.getElementById('tracking-result').classList.add('hidden');
+        alert("Please enter a valid tracking number.");
     }
 });
 
